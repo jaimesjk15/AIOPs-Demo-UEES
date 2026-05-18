@@ -41,11 +41,15 @@
 
 <script>
     // URL cruda de tu archivo aiops_config.json dentro del Gist
-    const GIST_RAW_URL = "https://gist.githubusercontent.com/TU_USUARIO/TU_GIST_ID/raw/aiops_config.json";
+    const GIST_RAW_URL = "https://gist.githubusercontent.com/jaimesjk15/b39499de7a1a8adfaff5128e061259a4/raw/aiops_config.json";
 
     async function validarYRedireccionar() {
         try {
-            const res = await fetch(GIST_RAW_URL);
+            // 🔥 TRUCO ANTI-CACHÉ: Agregamos la hora exacta en milisegundos a la URL
+            // Esto engaña al navegador haciéndole creer que es un archivo nuevo cada vez
+            const urlSinCache = GIST_RAW_URL + "?t=" + new Date().getTime();
+            
+            const res = await fetch(urlSinCache, { cache: "no-store" });
             const data = await res.json();
             const urlActiva = data.url_activa;
 
@@ -63,7 +67,6 @@
             document.getElementById('error-area').style.display = 'block';
         }
     }
-
     validarYRedireccionar();
 </script>
 </body>
