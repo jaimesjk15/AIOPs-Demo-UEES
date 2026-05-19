@@ -38,35 +38,44 @@
         </p>
     </div>.
 </div>
-
 <script>
     // URL cruda de tu archivo aiops_config.json dentro del Gist
     const GIST_RAW_URL = "https://gist.githubusercontent.com/jaimesjk15/b39499de7a1a8adfaff5128e061259a4/raw/aiops_config.json";
 
     async function validarYRedireccionar() {
         try {
-            // 🔥 TRUCO ANTI-CACHÉ: Agregamos la hora exacta en milisegundos a la URL
-            // Esto engaña al navegador haciéndole creer que es un archivo nuevo cada vez
+            // 1. Truco anti-caché para traer siempre la URL más reciente
             const urlSinCache = GIST_RAW_URL + "?t=" + new Date().getTime();
-            
             const res = await fetch(urlSinCache, { cache: "no-store" });
             const data = await res.json();
             const urlActiva = data.url_activa;
 
-            // Intentamos validar si la URL de Gradio responde
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 segundos de tolerancia
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-            const checkGradio = await fetch(urlActiva, { mode: 'no-cors', signal: controller.signal });
+            // 2. Ping Inteligente: Buscamos el endpoint interno de Gradio (/config)
+            const checkGradio = await fetch(urlActiva + '/config', { signal: controller.signal });
             
-            // Si responde con éxito, redirigimos inmediatamente
+            // Si el proxy arroja un error 500 o 504, forzamos la caída
+            if (!checkGradio.ok) {
+                throw new Error("El servidor de Gradio no responde correctamente");
+            }
+
+            // 3. Validación estricta: Si el servidor está vivo, debe responder con un JSON.
+            // Si está apagado y arroja la pantalla gris de Gradio (que es HTML), esto fallará y saltará al catch.
+            await checkGradio.json();
+            
+            // Si superó todas las pruebas, cancelamos el timeout y redirigimos
+            clearTimeout(timeoutId);
             window.location.href = urlActiva;
+
         } catch (error) {
-            // Si falla el fetch o da timeout, el servidor está apagado
+            // Se activa si hay Timeout, si Colab está apagado o si Gradio muestra la pantalla gris
             document.getElementById('loading-area').style.display = 'none';
             document.getElementById('error-area').style.display = 'block';
         }
     }
+
     validarYRedireccionar();
 </script>
 </body>
