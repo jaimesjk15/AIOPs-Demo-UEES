@@ -6,19 +6,34 @@
     <title>Centro de Mando AIOps - Acceso Corporativo</title>
     <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Arimo', sans-serif; background-color: #f8fafc; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: #334155; }
-        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 500px; border-top: 5px solid #80162A; }
+        /* El overflow: hidden evita que salgan dobles barras de desplazamiento */
+        body { font-family: 'Arimo', sans-serif; background-color: #f8fafc; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: #334155; overflow: hidden; }
+        
+        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 500px; border-top: 5px solid #80162A; z-index: 10; position: relative; }
         h1 { color: #80162A; font-size: 28px; margin-bottom: 10px; }
         p { font-size: 16px; line-height: 1.6; color: #64748b; }
         .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: #80162A; animation: spin 1s linear infinite; margin: 20px auto; }
         .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-top: 15px; }
         .offline { background: #fee2e2; color: #ef4444; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Estilos del iFrame encapsulador */
+        #gradio-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            z-index: 9999; /* Se pone por encima de todo cuando se activa */
+            display: none; /* Oculto inicialmente */
+            background-color: #ffffff;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
+<div class="card" id="status-card">
     <h1>🚀 Centro de Mando AIOps</h1>
     <p>Maestría en Inteligencia Artificial - UEES</p>
     <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
@@ -34,17 +49,18 @@
             El entorno de cómputo y pipeline de IA se encuentra actualmente en estado de optimización de recursos para mitigar costos de infraestructura.
         </p>
         <p style="text-align: justify; font-weight: bold;">
-            Para agendar una prueba del sistema o activar el nodo de ejecución, por favor contacte via correo al equipo 6 del proyecto integrador de la Maestria en Inteligencia Artifical. Contactos jaime.sierras@uees.edu.ec y juan.parra@uees.edu.ec.
+            Para agendar una prueba del sistema o activar el nodo de ejecución, por favor contacte vía correo al equipo 6 de maestría del proyecto. Contactos jaime.sierras@uees.edu.ec y juan.parra@uees.edu.ec.
         </p>
-    </div>.
+    </div>
 </div>
+
+<iframe id="gradio-frame" allow="clipboard-read; clipboard-write;"></iframe>
+
 <script>
-    // URL cruda de tu archivo aiops_config.json dentro del Gist
     const GIST_RAW_URL = "https://gist.githubusercontent.com/jaimesjk15/b39499de7a1a8adfaff5128e061259a4/raw/aiops_config.json";
 
     async function validarYRedireccionar() {
         try {
-            // 1. Truco anti-caché para traer siempre la URL más reciente
             const urlSinCache = GIST_RAW_URL + "?t=" + new Date().getTime();
             const res = await fetch(urlSinCache, { cache: "no-store" });
             const data = await res.json();
@@ -53,24 +69,29 @@
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-            // 2. Ping Inteligente: Buscamos el endpoint interno de Gradio (/config)
+            // Ping Inteligente
             const checkGradio = await fetch(urlActiva + '/config', { signal: controller.signal });
             
-            // Si el proxy arroja un error 500 o 504, forzamos la caída
             if (!checkGradio.ok) {
-                throw new Error("El servidor de Gradio no responde correctamente");
+                throw new Error("El servidor no responde");
             }
-
-            // 3. Validación estricta: Si el servidor está vivo, debe responder con un JSON.
-            // Si está apagado y arroja la pantalla gris de Gradio (que es HTML), esto fallará y saltará al catch.
             await checkGradio.json();
             
-            // Si superó todas las pruebas, cancelamos el timeout y redirigimos
             clearTimeout(timeoutId);
-            window.location.href = urlActiva;
+            
+            // LA MAGIA DE LA MÁSCARA OCURRE AQUÍ:
+            // En lugar de window.location.href = urlActiva; (que cambia la URL),
+            // inyectamos la URL en el iframe invisible y luego lo hacemos visible.
+            const iframe = document.getElementById('gradio-frame');
+            iframe.src = urlActiva;
+            
+            // Esperamos un pequeño instante para que el iframe empiece a cargar antes de mostrarlo
+            setTimeout(() => {
+                document.getElementById('status-card').style.display = 'none';
+                iframe.style.display = 'block';
+            }, 500);
 
         } catch (error) {
-            // Se activa si hay Timeout, si Colab está apagado o si Gradio muestra la pantalla gris
             document.getElementById('loading-area').style.display = 'none';
             document.getElementById('error-area').style.display = 'block';
         }
