@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Mando Predictivo - AIOps</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Arimo', sans-serif; 
+            background-color: #e2e8f0; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
+        .header { 
+            background-color: #80162A; 
+            color: white; 
+            padding: 15px 25px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            z-index: 10;
+        }
+        .header h1 { margin: 0; font-size: 22px; display: flex; align-items: center; gap: 10px;}
+        .header .badge { background-color: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: bold;}
+        .iframe-container { 
+            flex-grow: 1; 
+            width: 100%; 
+            border: none; 
+            background: white;
+        }
+        iframe { width: 100%; height: 100%; border: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Centro de Mando Analítico (Power BI)</h1>
+        <span class="badge">Orquestador AIOps - En vivo</span>
+    </div>
+    <div class="iframe-container">
+        <iframe title="AIOps Power BI" src="https://app.powerbi.com/view?r=eyJrIjoiODYyNzM0YTEtMDM1ZC00MTAyLTgwY2ItOGRjY2QwZjIyODIxIiwidCI6IjJjY2VkMmM4LWEzZDQtNGEyYS04MTVlLTUzMWQwYmQzNmUzNCIsImMiOjR9" allowFullScreen="true"></iframe>
+    </div>
+</body>
+</html>
